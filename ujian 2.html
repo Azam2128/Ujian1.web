@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Ujian</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .hidden {
+      display: none;
+    }
+    .question {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loginPage">
+      <h1>Selamat Datang</h1>
+      <p>Masukkan nama untuk memulai:</p>
+      <input type="text" id="username" placeholder="Nama Anda" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+      <button onclick="startQuiz()">Mulai Ujian</button>
+    </div>
+
+    <div id="quizPage" class="hidden">
+      <h2>Ujian Online</h2>
+      <p id="timer">Waktu Tersisa: <span id="time">10:00</span></p>
+      <div id="questionsContainer"></div>
+      <button onclick="submitQuiz()">Kirim Jawaban</button>
+    </div>
+
+    <div id="resultPage" class="hidden">
+      <h1>Hasil Ujian</h1>
+      <p id="result"></p>
+      <button onclick="location.reload()">Mulai Lagi</button>
+    </div>
+  </div>
+
+  <script>
+    // Data Soal
+    const questions = [
+      {
+        question: "Apa ibu kota Indonesia?",
+        options: ["Jakarta", "Surabaya", "Bandung", "Medan"],
+        answer: "Jakarta"
+      },
+      {
+        question: "Siapa presiden pertama Indonesia?",
+        options: ["Sukarno", "Suharto", "Habibie", "Jokowi"],
+        answer: "Sukarno"
+      },
+      {
+        question: "Berapa hasil 2 + 2?",
+        options: ["3", "4", "5", "6"],
+        answer: "4"
+      }
+    ];
+
+    let timer;
+    let userAnswers = [];
+    const totalTime = 600; // 10 minutes in seconds
+    let timeLeft = totalTime;
+    let violationCount = 0; // Hitung pelanggaran
+
+    // Mulai Ujian
+    function startQuiz() {
+      const username = document.getElementById('username').value;
+      if (!username) {
+        alert("Masukkan nama Anda!");
+        return;
+      }
+
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('quizPage').classList.remove('hidden');
+      renderQuestions();
+
+      // Mulai timer
+      timer = setInterval(() => {
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById('time').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    // Render Soal
+    function renderQuestions() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = "";
+
+      questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.classList.add('question');
+        div.innerHTML = `
+          <p><b>${index + 1}. ${q.question}</b></p>
+          ${q.options.map((option, i) => `
+            <label>
+              <input type="radio" name="q${index}" value="${option}">
+              ${option}
+            </label><br>
+          `).join('')}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Kirim Jawaban
+    function submitQuiz() {
+      clearInterval(timer);
+
+      // Ambil jawaban
+      questions.forEach((q, index) => {
+        const answer = document.querySelector(`input[name="q${index}"]:checked`);
+        userAnswers[index] = answer ? answer.value : null;
+      });
+
+      // Hitung skor
+      let score = 0;
+      questions.forEach((q, index) => {
+        if (userAnswers[index] === q.answer) score++;
+      });
+
+      // Tampilkan hasil
+      document.getElementById('quizPage').classList.add('hidden');
+      document.getElementById('resultPage').classList.remove('hidden');
+      document.getElementById('result').textContent = `Skor Anda: ${score} dari ${questions.length}`;
+    }
+
+    // Deteksi jika tab tidak aktif
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        violationCount++;
+        alert(`Anda keluar dari ujian! Pelanggaran: ${violationCount}`);
+        
+        // Jika pelanggaran lebih dari 3 kali, ujian dihentikan
+        if (violationCount >= 3) {
+          alert("Ujian Anda telah dihentikan karena terlalu banyak pelanggaran.");
+          submitQuiz(); // Kirim jawaban otomatis
+        }
+      }
+    });
+  </script>
+</body>
+</html>
